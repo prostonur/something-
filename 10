@@ -1,0 +1,181 @@
+#include <iostream>
+#include <fstream>
+
+using namespace std;
+
+int length(char* arr)
+{
+  int i = 0;
+  while (arr[i] != '\0')
+    i++;
+  return i;
+}
+
+void push_front(char*& str, int& str_size, int delta, char ch)
+{
+  char* new_str = new char[str_size + delta];
+  new_str[str_size + delta - 1] = '\0';
+
+  for (int i = 0; i < length(str); i++)
+    new_str[i + delta] = str[i];
+
+  for (int i = 0; i < delta; i++)
+    new_str[i] = ch;
+
+  delete[] str;
+  str = new_str;
+  str_size += delta;
+}
+
+void equalify(char*& a, char*& b, int& size_a, int& size_b)
+{
+
+  if (length(a) < length(b))
+  {
+    push_front(a, size_a, length(b) - length(a), '0');
+  }
+  else if (length(a) > length(b))
+  {
+    push_front(b, size_b, length(a) - length(b), '0');
+  }
+}
+
+int get_number(char ch)
+{
+  if (ch >= '0' && ch <= '9')
+  {
+    return ch - '0';
+  }
+  else if (ch >= 'A' && ch <= 'F')
+  {
+    return ch - 'A' + 10;
+  }
+  return -1;
+}
+
+char get_char(int x)
+{
+  if (x <= 9)
+  {
+    return x + '0';
+  }
+  else if (x <= 15){
+    return x + 'A' - 10;
+  }
+  else // > 15
+  {
+    x -= 16;
+    get_char(x);
+  }
+  
+}
+
+void sum(char*& str1, char*& str2, int& size_str1, int& size_str2)
+{
+  equalify(str1, str2, size_str1, size_str2);
+
+  int rem = 0;
+  
+  int size_result = 1;
+  char* result = new char[size_result];
+  result[0] = '\0';
+
+  for (int i = length(str1) - 1; i >= 0; i--)
+  {
+    int a = get_number(str1[i]);
+    int b = get_number(str2[i]);
+    int c = a + b + rem;
+
+    char ch;
+
+    if (c <= 15)
+      rem = 0;
+
+    else // > 15
+      rem = 1;
+
+    ch = get_char(c);
+
+    push_front(result, size_result, 1, ch);
+  }
+  if (rem == 1)
+    push_front(result, size_result, 1, '1');
+
+  delete[] str1;
+  str1 = result;
+}
+
+void reallocate(char*& str, int& size)
+{
+  char* new_str = new char[size*1.5];
+  for (int i = 0; i < size; i++)
+  {
+    new_str[i] = str[i];
+  }
+  delete[] str;
+  str = new_str;
+  size *= 1.5;
+}
+
+int main()
+{
+  fstream fin;
+  fin.open("test.txt", fstream::in | fstream::out | fstream::app);
+
+  ofstream fout;
+  fout.open("out.txt");
+
+  if (!fin.is_open())
+  {
+    cout << "error openning file \n";
+    return -1;
+  }
+  if (!fout.is_open())
+  {
+    cout << "error openning file \n";
+    return -1;
+  }
+
+  int size_str = 30;
+  char* str = new char[size_str];
+
+  int size_result = 1;
+  char* result = new char[size_result];
+
+  str[0] = '\0';
+  result[0] = '\0';
+
+  char ch;
+  int i = 0;
+  do 
+  {
+    ch = fin.get();
+
+    // fin.get can return -1 in eof
+    if (ch == -1)
+      ch = '\n';
+
+
+    str[i++] = ch;
+    
+    if (i == size_str)
+      reallocate(str, size_str);
+
+    if (ch == '\n')
+    {
+      str[i-1] = '\0';
+      sum(result, str, size_result, size_str);
+      i = 0;
+    }
+  } while (!fin.eof());
+  
+  
+  fin.clear();
+  fin <<"\n"<< result;
+
+  fout.clear();
+  fout << result;
+  
+  fin.close();
+  fout.close();
+}
